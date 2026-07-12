@@ -38,6 +38,7 @@ target/
 logs/
 *.log
 *.pid
+backend/identity-service/src/main/resources/application-dev.yml
 
 # =========================
 # Node.js
