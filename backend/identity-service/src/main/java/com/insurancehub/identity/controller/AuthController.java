@@ -2,8 +2,10 @@ package com.insurancehub.identity.controller;
 
 import com.insurancehub.identity.dto.request.LoginRequest;
 import com.insurancehub.identity.dto.request.RegisterRequest;
+import com.insurancehub.identity.dto.request.UpdateProfileRequest;
 import com.insurancehub.identity.dto.response.LoginResponse;
 import com.insurancehub.identity.dto.response.RegisterResponse;
+import com.insurancehub.identity.dto.response.UserProfileResponse;
 import com.insurancehub.identity.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,5 +31,17 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request) {
 
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserProfileResponse> getCurrentUser() {
+        return ResponseEntity.ok(authService.getCurrentUser());
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<UserProfileResponse> updateProfile(
+            @Valid @RequestBody UpdateProfileRequest request) {
+
+        return ResponseEntity.ok(authService.updateProfile(request));
     }
 }

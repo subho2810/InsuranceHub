@@ -13,7 +13,7 @@ import java.util.UUID;
 
 @Getter
 @RequiredArgsConstructor
-public class CustomUserDetails implements UserDetails {
+public class  CustomUserDetails implements UserDetails {
 
     private final User user;
 

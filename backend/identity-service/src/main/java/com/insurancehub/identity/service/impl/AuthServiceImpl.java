@@ -2,8 +2,10 @@ package com.insurancehub.identity.service.impl;
 
 import com.insurancehub.identity.dto.request.LoginRequest;
 import com.insurancehub.identity.dto.request.RegisterRequest;
+import com.insurancehub.identity.dto.request.UpdateProfileRequest;
 import com.insurancehub.identity.dto.response.LoginResponse;
 import com.insurancehub.identity.dto.response.RegisterResponse;
+import com.insurancehub.identity.dto.response.UserProfileResponse;
 import com.insurancehub.identity.entity.Role;
 import com.insurancehub.identity.entity.User;
 import com.insurancehub.identity.exception.EmailAlreadyExistsException;
@@ -18,6 +20,7 @@ import com.insurancehub.identity.util.RoleConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -84,6 +87,60 @@ public class AuthServiceImpl implements AuthService {
                 .accessToken(token)
                 .tokenType("Bearer")
                 .expiresIn(jwtProperties.getAccessTokenExpiration())
+                .build();
+    }
+
+    @Override
+    public UserProfileResponse getCurrentUser() {
+
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        CustomUserDetails userDetails =
+                (CustomUserDetails) authentication.getPrincipal();
+
+        User user = userDetails.getUser();
+
+        return mapToUserProfile(user);
+    }
+
+
+    @Override
+    public UserProfileResponse updateProfile(UpdateProfileRequest request) {
+
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        CustomUserDetails userDetails =
+                (CustomUserDetails) authentication.getPrincipal();
+
+        User user = userDetails.getUser();
+
+        if (!user.getPhoneNumber().equals(request.getPhoneNumber())
+                && userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+
+            throw new PhoneNumberAlreadyExistsException(request.getPhoneNumber());
+        }
+
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setPhoneNumber(request.getPhoneNumber());
+
+        User updatedUser = userRepository.save(user);
+
+        return mapToUserProfile(user);
+    }
+
+
+    private UserProfileResponse mapToUserProfile(User user) {
+        return UserProfileResponse.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .phoneNumber(user.getPhoneNumber())
+                .role(user.getRole().getName())
+                .emailVerified(user.getEmailVerified())
                 .build();
     }
 }
