@@ -1,11 +1,14 @@
 package com.insurancehub.identity.controller;
 
+import com.insurancehub.identity.dto.request.LoginRequest;
 import com.insurancehub.identity.dto.request.RegisterRequest;
+import com.insurancehub.identity.dto.response.LoginResponse;
 import com.insurancehub.identity.dto.response.RegisterResponse;
 import com.insurancehub.identity.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,5 +22,12 @@ public class AuthController {
     @ResponseStatus(HttpStatus.CREATED)
     public RegisterResponse register(@Valid @RequestBody RegisterRequest request) {
         return authService.register(request);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(
+            @Valid @RequestBody LoginRequest request) {
+
+        return ResponseEntity.ok(authService.login(request));
     }
 }

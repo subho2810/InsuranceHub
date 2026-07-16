@@ -1,6 +1,8 @@
 package com.insurancehub.identity.service.impl;
 
+import com.insurancehub.identity.dto.request.LoginRequest;
 import com.insurancehub.identity.dto.request.RegisterRequest;
+import com.insurancehub.identity.dto.response.LoginResponse;
 import com.insurancehub.identity.dto.response.RegisterResponse;
 import com.insurancehub.identity.entity.Role;
 import com.insurancehub.identity.entity.User;
@@ -8,11 +10,17 @@ import com.insurancehub.identity.exception.EmailAlreadyExistsException;
 import com.insurancehub.identity.exception.PhoneNumberAlreadyExistsException;
 import com.insurancehub.identity.repository.RoleRepository;
 import com.insurancehub.identity.repository.UserRepository;
+import com.insurancehub.identity.security.jwt.JwtProperties;
+import com.insurancehub.identity.security.jwt.JwtService;
+import com.insurancehub.identity.security.user.CustomUserDetails;
 import com.insurancehub.identity.service.AuthService;
-import com.insurancehub.identity.utils.RoleConstants;
+import com.insurancehub.identity.util.RoleConstants;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.security.authentication.AuthenticationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +29,9 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
+    private final JwtProperties jwtProperties;
 
     @Override
     public RegisterResponse register(RegisterRequest request) {
@@ -51,6 +62,28 @@ public class AuthServiceImpl implements AuthService {
                 .userId(savedUser.getId())
                 .email(savedUser.getEmail())
                 .message("User registered successfully")
+                .build();
+    }
+
+    @Override
+    public LoginResponse login(LoginRequest request) {
+
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getEmail(),
+                        request.getPassword()
+                )
+        );
+
+        CustomUserDetails userDetails =
+                (CustomUserDetails) authentication.getPrincipal();
+
+        String token = jwtService.generateToken(userDetails.getUsername());
+
+        return LoginResponse.builder()
+                .accessToken(token)
+                .tokenType("Bearer")
+                .expiresIn(jwtProperties.getAccessTokenExpiration())
                 .build();
     }
 }

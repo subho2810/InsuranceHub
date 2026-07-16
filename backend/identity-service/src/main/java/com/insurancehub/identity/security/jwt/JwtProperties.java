@@ -1,17 +1,19 @@
 package com.insurancehub.identity.security.jwt;
 
 import lombok.Getter;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.Setter;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Getter
+@Setter
 @Component
+@ConfigurationProperties(prefix = "jwt")
 public class JwtProperties {
 
-    @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${jwt.access-token-expiration}")
     private long accessTokenExpiration;
 
+    private long refreshTokenExpiration;
 }
