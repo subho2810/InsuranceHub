@@ -1,8 +1,6 @@
 package com.insurancehub.identity.service;
 
-import com.insurancehub.identity.dto.request.LoginRequest;
-import com.insurancehub.identity.dto.request.RegisterRequest;
-import com.insurancehub.identity.dto.request.UpdateProfileRequest;
+import com.insurancehub.identity.dto.request.*;
 import com.insurancehub.identity.dto.response.LoginResponse;
 import com.insurancehub.identity.dto.response.RegisterResponse;
 import com.insurancehub.identity.dto.response.UserProfileResponse;
@@ -16,5 +14,9 @@ public interface AuthService {
     UserProfileResponse getCurrentUser();
 
     UserProfileResponse updateProfile(UpdateProfileRequest request);
+
+    LoginResponse refreshAccessToken(RefreshTokenRequest request);
+
+    void logout(LogoutRequest request);
 
 }

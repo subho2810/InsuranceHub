@@ -1,14 +1,14 @@
 package com.insurancehub.identity.service.impl;
 
-import com.insurancehub.identity.dto.request.LoginRequest;
-import com.insurancehub.identity.dto.request.RegisterRequest;
-import com.insurancehub.identity.dto.request.UpdateProfileRequest;
+import com.insurancehub.identity.dto.request.*;
 import com.insurancehub.identity.dto.response.LoginResponse;
 import com.insurancehub.identity.dto.response.RegisterResponse;
 import com.insurancehub.identity.dto.response.UserProfileResponse;
+import com.insurancehub.identity.entity.RefreshToken;
 import com.insurancehub.identity.entity.Role;
 import com.insurancehub.identity.entity.User;
 import com.insurancehub.identity.exception.EmailAlreadyExistsException;
+import com.insurancehub.identity.exception.InvalidRefreshTokenException;
 import com.insurancehub.identity.exception.PhoneNumberAlreadyExistsException;
 import com.insurancehub.identity.repository.RoleRepository;
 import com.insurancehub.identity.repository.UserRepository;
@@ -16,6 +16,7 @@ import com.insurancehub.identity.security.jwt.JwtProperties;
 import com.insurancehub.identity.security.jwt.JwtService;
 import com.insurancehub.identity.security.user.CustomUserDetails;
 import com.insurancehub.identity.service.AuthService;
+import com.insurancehub.identity.service.RefreshTokenService;
 import com.insurancehub.identity.util.RoleConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -35,6 +36,7 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final JwtProperties jwtProperties;
+    private final RefreshTokenService refreshTokenService;
 
     @Override
     public RegisterResponse register(RegisterRequest request) {
@@ -83,8 +85,14 @@ public class AuthServiceImpl implements AuthService {
 
         String token = jwtService.generateToken(userDetails.getUsername());
 
+        RefreshToken refreshToken =
+                refreshTokenService.createRefreshToken(
+                        userDetails.getUser()
+                );
+
         return LoginResponse.builder()
                 .accessToken(token)
+                .refreshToken(refreshToken.getToken())
                 .tokenType("Bearer")
                 .expiresIn(jwtProperties.getAccessTokenExpiration())
                 .build();
@@ -114,6 +122,8 @@ public class AuthServiceImpl implements AuthService {
         CustomUserDetails userDetails =
                 (CustomUserDetails) authentication.getPrincipal();
 
+
+
         User user = userDetails.getUser();
 
         if (!user.getPhoneNumber().equals(request.getPhoneNumber())
@@ -142,5 +152,49 @@ public class AuthServiceImpl implements AuthService {
                 .role(user.getRole().getName())
                 .emailVerified(user.getEmailVerified())
                 .build();
+    }
+
+    @Override
+    public LoginResponse refreshAccessToken(
+            RefreshTokenRequest request) {
+
+        RefreshToken refreshToken =
+                refreshTokenService.findByToken(
+                        request.getRefreshToken()
+                );
+
+        refreshToken =
+                refreshTokenService.verifyExpiration(
+                        refreshToken
+                );
+
+        if (Boolean.TRUE.equals(refreshToken.getRevoked())) {
+            throw new InvalidRefreshTokenException(
+                    "Refresh token has been revoked"
+            ); 
+        }
+
+        User user = refreshToken.getUser();
+
+        String accessToken = jwtService.generateToken(user.getEmail());
+
+        refreshToken = refreshTokenService.updateLastUsed(refreshToken);
+
+        return LoginResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken.getToken())
+                .tokenType("Bearer")
+                .expiresIn(jwtProperties.getAccessTokenExpiration())
+                .build();
+
+
+    }
+
+    @Override
+    public void logout(LogoutRequest request) {
+
+        refreshTokenService.revokeToken(
+                request.getRefreshToken()
+        );
     }
 }

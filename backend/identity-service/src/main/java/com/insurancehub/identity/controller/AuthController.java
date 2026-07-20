@@ -1,8 +1,6 @@
 package com.insurancehub.identity.controller;
 
-import com.insurancehub.identity.dto.request.LoginRequest;
-import com.insurancehub.identity.dto.request.RegisterRequest;
-import com.insurancehub.identity.dto.request.UpdateProfileRequest;
+import com.insurancehub.identity.dto.request.*;
 import com.insurancehub.identity.dto.response.LoginResponse;
 import com.insurancehub.identity.dto.response.RegisterResponse;
 import com.insurancehub.identity.dto.response.UserProfileResponse;
@@ -43,5 +41,23 @@ public class AuthController {
             @Valid @RequestBody UpdateProfileRequest request) {
 
         return ResponseEntity.ok(authService.updateProfile(request));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<LoginResponse> refreshToken(
+            @Valid @RequestBody RefreshTokenRequest request) {
+
+        return ResponseEntity.ok(
+                authService.refreshAccessToken(request)
+        );
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @Valid @RequestBody LogoutRequest request) {
+
+        authService.logout(request);
+
+        return ResponseEntity.noContent().build();
     }
 }
