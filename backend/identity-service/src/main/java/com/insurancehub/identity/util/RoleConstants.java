@@ -1,4 +1,4 @@
-package com.insurancehub.identity.utils;
+package com.insurancehub.identity.util;
 
 
 public final class RoleConstants {

@@ -1,0 +1,57 @@
+version: "3.9"
+
+services:
+
+  postgres:
+    image: postgres:18
+    container_name: insurancehub-postgres
+
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    networks:
+      - insurancehub-network
+
+
+  identity-service:
+    build:
+      context: ./backend/identity-service
+
+    image: insurancehub/identity-service:1.0
+
+    container_name: identity-service
+
+    depends_on:
+      - postgres
+
+    ports:
+      - "8081:8081"
+
+    environment:
+      DB_URL: ${DB_URL}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION}
+
+    networks:
+      - insurancehub-network
+
+
+volumes:
+  postgres_data:
+
+networks:
+  insurancehub-network:
