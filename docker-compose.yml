@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+
+  postgres:
+
+    image: postgres:18
+
+    container_name: insurancehub-postgres
+
+    restart: always
+
+    environment:
+      POSTGRES_DB: identity_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: subho2810
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  identity-service:
+
+    build: .
+
+    container_name: identity-service
+
+    depends_on:
+      - postgres
+
+    ports:
+      - "8081:8081"
+
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/identity_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: subho2810
+
+volumes:
+
+  postgres_data:z

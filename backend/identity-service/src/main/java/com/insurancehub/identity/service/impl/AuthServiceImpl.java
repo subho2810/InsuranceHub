@@ -25,7 +25,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.authentication.AuthenticationManager;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -41,11 +43,15 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public RegisterResponse register(RegisterRequest request) {
 
+        log.info("Registration request received for email: {}", request.getEmail());
+
         if (userRepository.existsByEmail(request.getEmail())) {
+            log.warn("Registration failed. Email already exists: {}", request.getEmail());
             throw new EmailAlreadyExistsException(request.getEmail());
         }
 
         if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+            log.warn("Registration failed. Phone number already exists: {}", request.getPhoneNumber());
             throw new PhoneNumberAlreadyExistsException(request.getPhoneNumber());
         }
 
@@ -63,6 +69,8 @@ public class AuthServiceImpl implements AuthService {
 
         User savedUser = userRepository.save(user);
 
+        log.info("User registered successfully with email: {}", user.getEmail());
+
         return RegisterResponse.builder()
                 .userId(savedUser.getId())
                 .email(savedUser.getEmail())
@@ -72,6 +80,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginResponse login(LoginRequest request) {
+        log.info("Login attempt for email: {}", request.getEmail());
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -89,6 +98,8 @@ public class AuthServiceImpl implements AuthService {
                 refreshTokenService.createRefreshToken(
                         userDetails.getUser()
                 );
+
+        log.info("User logged in successfully: {}", request.getEmail());
 
         return LoginResponse.builder()
                 .accessToken(token)
@@ -158,6 +169,8 @@ public class AuthServiceImpl implements AuthService {
     public LoginResponse refreshAccessToken(
             RefreshTokenRequest request) {
 
+        log.info("Refresh token request received.");
+
         RefreshToken refreshToken =
                 refreshTokenService.findByToken(
                         request.getRefreshToken()
@@ -169,6 +182,7 @@ public class AuthServiceImpl implements AuthService {
                 );
 
         if (Boolean.TRUE.equals(refreshToken.getRevoked())) {
+            log.warn("Revoked refresh token used.");
             throw new InvalidRefreshTokenException(
                     "Refresh token has been revoked"
             ); 
@@ -179,6 +193,8 @@ public class AuthServiceImpl implements AuthService {
         String accessToken = jwtService.generateToken(user.getEmail());
 
         refreshToken = refreshTokenService.updateLastUsed(refreshToken);
+
+        log.info("Access token refreshed successfully.");
 
         return LoginResponse.builder()
                 .accessToken(accessToken)
@@ -193,8 +209,10 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void logout(LogoutRequest request) {
 
+        log.info("Logout request received.");
         refreshTokenService.revokeToken(
                 request.getRefreshToken()
         );
+        log.info("Refresh token revoked successfully.");
     }
 }
