@@ -21,7 +21,6 @@ out/
 # Java
 # =========================
 *.class
-*.jar
 *.war
 *.ear
 hs_err_pid*
@@ -38,6 +37,8 @@ target/
 logs/
 *.log
 *.pid
+
+# Ignore local development configuration
 backend/identity-service/src/main/resources/application-dev.yml
 
 # =========================
@@ -71,6 +72,7 @@ build/
 # Docker
 # =========================
 docker-data/
+postgres-data/
 
 # =========================
 # Misc
